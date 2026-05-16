@@ -3,7 +3,7 @@ import axios from "axios"
 
 axios.defaults.withCredentials = true;
 
-const API_URL = "https://chhobi-2.onrender.com"
+const API_URL = "https://chhobi-2.onrender.com/api"
 
 export const useAuthStore = create((set) => ({
     // initial states
