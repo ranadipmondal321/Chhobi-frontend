@@ -1,6 +1,8 @@
+import { API_URL } from "./api";
+
 export const addToHistory = async ({ mediaId, mediaType, title, poster_path, release_date }) => {
   try {
-    await fetch(`${import.meta.env.VITE_API_URL}/api/history/add`, {
+    await fetch(`${API_URL}/history/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
