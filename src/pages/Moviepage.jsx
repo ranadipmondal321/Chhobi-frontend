@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router";
 import { Play, Bookmark, BookmarkCheck, X } from "lucide-react";
+import { API_URL } from "../lib/api";
 
 const Moviepage = () => {
   const params = useParams();
@@ -18,8 +19,7 @@ const Moviepage = () => {
     method: "GET",
     headers: {
       accept: "application/json",
-      Authorization:
-        "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJkOTNhMjZjODk4NDNiNTA0Yjc5ZmUzYTAzODlhMThjMSIsIm5iZiI6MTc3ODMyNzAyNy40OTQwMDAyLCJzdWIiOiI2OWZmMWRmMzFkYWJhMjliZjVhZThkYTEiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.clAArrB45ttQV4q42hLqFYgkgF1aHAIUb3HjBTTmG3s",
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJkOTNhMjZjODk4NDNiNTA0Yjc5ZmUzYTAzODlhMThjMSIsIm5iZiI6MTc3ODMyNzAyNy40OTQwMDAyLCJzdWIiOiI2OWZmMWRmMzFkYWJhMjliZjVhZThkYTEiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.clAArrB45ttQV4q42hLqFYgkgF1aHAIUb3HjBTTmG3s",
     },
   };
 
@@ -27,45 +27,29 @@ const Moviepage = () => {
     if (!id) return;
     let isCancelled = false;
 
-    const p1 = fetch(
-      `https://api.themoviedb.org/3/movie/${id}?language=en-US`,
-      options,
-    )
+    const p1 = fetch(`https://api.themoviedb.org/3/movie/${id}?language=en-US`, options)
       .then((res) => res.json())
-      .then((res) => {
-        if (!isCancelled) setMovie(res);
-      });
+      .then((res) => { if (!isCancelled) setMovie(res); });
 
-    const p2 = fetch(
-      `https://api.themoviedb.org/3/movie/${id}/recommendations?language=en-US&page=1`,
-      options,
-    )
+    const p2 = fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?language=en-US&page=1`, options)
       .then((res) => res.json())
-      .then((res) => {
-        if (!isCancelled) setRecommendations(res.results || []);
-      });
+      .then((res) => { if (!isCancelled) setRecommendations(res.results || []); });
 
-    const p3 = fetch(
-      `https://api.themoviedb.org/3/movie/${id}/videos?language=en-US`,
-      options,
-    )
+    const p3 = fetch(`https://api.themoviedb.org/3/movie/${id}/videos?language=en-US`, options)
       .then((res) => res.json())
       .then((res) => {
         const trailer = res.results?.find(
-          (vid) => vid.site === "YouTube" && vid.type === "Trailer",
+          (vid) => vid.site === "YouTube" && vid.type === "Trailer"
         );
         if (!isCancelled) setTrailerKey(trailer?.key || null);
       });
 
-    const p4 = fetch(`${import.meta.env.VITE_API_URL}/api/watchlist`, {
-      credentials: "include",
-    })
+    const p4 = fetch(`${API_URL}/watchlist`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled) {
           const isSaved = data.watchlist?.some(
-            (item) =>
-              String(item.mediaId) === String(id) && item.mediaType === "movie",
+            (item) => String(item.mediaId) === String(id) && item.mediaType === "movie"
           );
           setSaved(isSaved);
         }
@@ -74,19 +58,15 @@ const Moviepage = () => {
 
     Promise.all([p1, p2, p3, p4])
       .catch((err) => console.error(err))
-      .finally(() => {
-        if (!isCancelled) setLoading(false);
-      });
+      .finally(() => { if (!isCancelled) setLoading(false); });
 
-    return () => {
-      isCancelled = true;
-    };
+    return () => { isCancelled = true; };
   }, [id]);
 
   const handleWatchNow = () => {
     if (!trailerKey) return;
     setShowTrailer(true);
-    fetch(`${import.meta.env.VITE_API_URL}/api/history/add`, {
+    fetch(`${API_URL}/history/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -103,9 +83,9 @@ const Moviepage = () => {
   const handleSaveToggle = async () => {
     if (!movie) return;
     setSaveLoading(true);
-    const endpoint = saved ? "/api/watchlist/remove" : "/api/watchlist/add";
+    const endpoint = saved ? "/watchlist/remove" : "/watchlist/add";
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -129,7 +109,7 @@ const Moviepage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#181818] via-[#232323] to-[#181818]">
         <div className="w-10 h-10 rounded-full border-4 border-[#333] border-t-[#e50914] animate-spin mb-4" />
-        <p className="text-[#888] text-sm"> Loading movie... </p>
+        <p className="text-[#888] text-sm">Loading movie...</p>
       </div>
     );
   }
@@ -144,7 +124,7 @@ const Moviepage = () => {
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="relative w-full max-w-4xl mx-4 sm:mx-4 aspect-video sm:rounded-2xl overflow-hidden shadow-2xl">
+          <div className="relative w-full max-w-4xl mx-4 aspect-video sm:rounded-2xl overflow-hidden shadow-2xl">
             <iframe
               src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&playsinline=1`}
               title="Trailer"
@@ -173,7 +153,7 @@ const Moviepage = () => {
             alt={movie.title}
           />
           <div>
-            <h1 className="text-4xl font-bold mb-2">{movie.title}</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{movie.title}</h1>
             <div className="flex items-center gap-4 mb-2">
               <span>⭐ {movie.vote_average?.toFixed(1)}</span>
               <span>{movie.release_date}</span>
@@ -181,15 +161,12 @@ const Moviepage = () => {
             </div>
             <div className="flex flex-wrap gap-2 mb-4">
               {movie.genres?.map((genre) => (
-                <span
-                  key={genre.id}
-                  className="bg-gray-800 px-3 py-1 rounded-full text-sm"
-                >
+                <span key={genre.id} className="bg-gray-800 px-3 py-1 rounded-full text-sm">
                   {genre.name}
                 </span>
               ))}
             </div>
-            <p className="max-w-2xl text-gray-200"> Overview </p>
+            <p className="max-w-2xl text-gray-200">{movie.overview}</p>
             <div className="flex gap-2 md:gap-4 mt-2 md:mt-4">
               <button
                 onClick={handleSaveToggle}
@@ -197,15 +174,9 @@ const Moviepage = () => {
                 className={`flex justify-center items-center py-2 px-3 md:py-3 md:px-4 rounded-full cursor-pointer text-xs md:text-base transition font-medium ${saved ? "bg-[#e50914] text-white hover:bg-red-700" : "bg-white hover:bg-gray-200 text-[#e50914]"} disabled:opacity-50`}
               >
                 {saved ? (
-                  <>
-                    <BookmarkCheck className="mr-1 md:mr-2 w-4 h-4" />{" "}
-                    Saved{" "}
-                  </>
+                  <><BookmarkCheck className="mr-1 md:mr-2 w-4 h-4" /> Saved</>
                 ) : (
-                  <>
-                    <Bookmark className="mr-1 md:mr-2 w-4 h-4" /> Save For
-                    Later{" "}
-                  </>
+                  <><Bookmark className="mr-1 md:mr-2 w-4 h-4" /> Save for Later</>
                 )}
               </button>
               <button
@@ -220,76 +191,24 @@ const Moviepage = () => {
         </div>
       </div>
 
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <h2 className="text-2xl font-semibold mb-4">Details</h2>
         <div className="bg-[#232323] rounded-lg shadow-lg p-6 flex flex-col md:flex-row gap-8">
           <div className="flex-1">
             <ul className="text-gray-300 space-y-3">
-              <li>
-                <span className="font-semibold text-white">Status: </span>
-                <span className="ml-2">{movie.status}</span>
-              </li>
-              <li>
-                <span className="font-semibold text-white">Release Date: </span>
-                <span className="ml-2">{movie.release_date}</span>
-              </li>
-              <li>
-                <span className="font-semibold text-white">
-                  Original Language:{" "}
-                </span>
-                <span className="ml-2">
-                  {movie.original_language?.toUpperCase()}
-                </span>
-              </li>
-              <li>
-                <span className="font-semibold text-white">Budget: </span>
-                <span className="ml-2">
-                  {movie.budget ? `$${movie.budget.toLocaleString()}` : "N/A"}
-                </span>
-              </li>
-              <li>
-                <span className="font-semibold text-white">Revenue: </span>
-                <span className="ml-2">
-                  {movie.revenue ? `$${movie.revenue.toLocaleString()}` : "N/A"}
-                </span>
-              </li>
-              <li>
-                <span className="font-semibold text-white">
-                  Production Companies:{" "}
-                </span>
-                <span className="ml-2">
-                  {movie.production_companies?.length > 0
-                    ? movie.production_companies.map((c) => c.name).join(", ")
-                    : "N/A"}
-                </span>
-              </li>
-              <li>
-                <span className="font-semibold text-white">Countries: </span>
-                <span className="ml-2">
-                  {movie.production_countries?.length > 0
-                    ? movie.production_countries.map((c) => c.name).join(", ")
-                    : "N/A"}
-                </span>
-              </li>
-              <li>
-                <span className="font-semibold text-white">
-                  Spoken Languages:{" "}
-                </span>
-                <span className="ml-2">
-                  {movie.spoken_languages?.length > 0
-                    ? movie.spoken_languages
-                        .map((lang) => lang.english_name)
-                        .join(", ")
-                    : "N/A"}
-                </span>
-              </li>
+              <li><span className="font-semibold text-white">Status: </span><span className="ml-2">{movie.status}</span></li>
+              <li><span className="font-semibold text-white">Release Date: </span><span className="ml-2">{movie.release_date}</span></li>
+              <li><span className="font-semibold text-white">Original Language: </span><span className="ml-2">{movie.original_language?.toUpperCase()}</span></li>
+              <li><span className="font-semibold text-white">Budget: </span><span className="ml-2">{movie.budget ? `$${movie.budget.toLocaleString()}` : "N/A"}</span></li>
+              <li><span className="font-semibold text-white">Revenue: </span><span className="ml-2">{movie.revenue ? `$${movie.revenue.toLocaleString()}` : "N/A"}</span></li>
+              <li><span className="font-semibold text-white">Production Companies: </span><span className="ml-2">{movie.production_companies?.length > 0 ? movie.production_companies.map((c) => c.name).join(", ") : "N/A"}</span></li>
+              <li><span className="font-semibold text-white">Countries: </span><span className="ml-2">{movie.production_countries?.length > 0 ? movie.production_countries.map((c) => c.name).join(", ") : "N/A"}</span></li>
+              <li><span className="font-semibold text-white">Spoken Languages: </span><span className="ml-2">{movie.spoken_languages?.length > 0 ? movie.spoken_languages.map((lang) => lang.english_name).join(", ") : "N/A"}</span></li>
             </ul>
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-white mb-2">Tagline</h3>
-            <p className="italic text-gray-400 mb-6">
-              {movie.tagline || "No tagline available."}{" "}
-            </p>
+            <p className="italic text-gray-400 mb-6">{movie.tagline || "No tagline available."}</p>
             <h3 className="font-semibold text-white mb-2">Overview</h3>
             <p className="text-gray-200">{movie.overview}</p>
           </div>
@@ -297,27 +216,16 @@ const Moviepage = () => {
       </div>
 
       {recommendations.length > 0 && (
-        <div className="p-8">
-          <h2 className="text-2xl font-semibold mb-4">
-            You might also like...
-          </h2>
+        <div className="p-4 sm:p-8">
+          <h2 className="text-2xl font-semibold mb-4">You might also like...</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {recommendations.slice(0, 10).map((rec) => (
-              <div
-                key={rec.id}
-                className="bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition"
-              >
+              <div key={rec.id} className="bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition">
                 <Link to={`/movie/${rec.id}`}>
-                  <img
-                    src={`https://image.tmdb.org/t/p/w300/${rec.poster_path}`}
-                    className="w-full h-48 object-cover"
-                    alt={rec.title}
-                  />
+                  <img src={`https://image.tmdb.org/t/p/w300/${rec.poster_path}`} className="w-full h-48 object-cover" alt={rec.title} />
                   <div className="p-2">
                     <h3 className="text-sm font-semibold">{rec.title}</h3>
-                    <span className="text-xs text-gray-400">
-                      {rec.release_date?.slice(0, 4)}
-                    </span>
+                    <span className="text-xs text-gray-400">{rec.release_date?.slice(0, 4)}</span>
                   </div>
                 </Link>
               </div>
