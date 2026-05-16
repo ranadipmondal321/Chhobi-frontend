@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { User, Mail, Lock, Trash2, CheckCircle } from "lucide-react";
+import { User, Mail, Lock, Trash2 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router";
+import { API_URL } from "../lib/api";
 
 const Section = ({ icon: Icon, title, children }) => (
   <div className="bg-[#232323] border border-[#333] rounded-2xl p-6 md:p-8">
@@ -22,21 +23,12 @@ const Settings = () => {
 
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [passwords, setPasswords] = useState({
-    current: "",
-    new: "",
-    confirm: "",
-  });
-  const [loading, setLoading] = useState({
-    username: false,
-    email: false,
-    password: false,
-    delete: false,
-  });
+  const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
+  const [loading, setLoading] = useState({ username: false, email: false, password: false, delete: false });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const apiCall = async (url, body, method = "PUT") => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}${url}`, {
+    const res = await fetch(`${API_URL}${url}`, {
       method,
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -48,41 +40,27 @@ const Settings = () => {
   const handleUpdateUsername = async () => {
     if (!username.trim() || username === user?.username) return;
     setLoading((l) => ({ ...l, username: true }));
-    const data = await apiCall("/api/user/update-username", { username });
-    if (data.user) {
-      setUser(data.user);
-      toast.success(data.message);
-    } else {
-      toast.error(data.message);
-    }
+    const data = await apiCall("/user/update-username", { username });
+    if (data.user) { setUser(data.user); toast.success(data.message); }
+    else toast.error(data.message);
     setLoading((l) => ({ ...l, username: false }));
   };
 
   const handleUpdateEmail = async () => {
     if (!email.trim() || email === user?.email) return;
     setLoading((l) => ({ ...l, email: true }));
-    const data = await apiCall("/api/user/update-email", { email });
-    if (data.user) {
-      setUser(data.user);
-      toast.success(data.message);
-    } else {
-      toast.error(data.message);
-    }
+    const data = await apiCall("/user/update-email", { email });
+    if (data.user) { setUser(data.user); toast.success(data.message); }
+    else toast.error(data.message);
     setLoading((l) => ({ ...l, email: false }));
   };
 
   const handleUpdatePassword = async () => {
     if (!passwords.current || !passwords.new || !passwords.confirm) return;
-    if (passwords.new !== passwords.confirm) {
-      toast.error("New passwords don't match.");
-      return;
-    }
-    if (passwords.new.length < 6) {
-      toast.error("Password must be at least 6 characters.");
-      return;
-    }
+    if (passwords.new !== passwords.confirm) { toast.error("New passwords don't match."); return; }
+    if (passwords.new.length < 6) { toast.error("Password must be at least 6 characters."); return; }
     setLoading((l) => ({ ...l, password: true }));
-    const data = await apiCall("/api/user/update-password", {
+    const data = await apiCall("/user/update-password", {
       currentPassword: passwords.current,
       newPassword: passwords.new,
     });
@@ -97,10 +75,10 @@ const Settings = () => {
 
   const handleDeleteAccount = async () => {
     setLoading((l) => ({ ...l, delete: true }));
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/user/delete-account`,
-      { method: "DELETE", credentials: "include" }
-    );
+    const res = await fetch(`${API_URL}/user/delete-account`, {
+      method: "DELETE",
+      credentials: "include",
+    });
     const data = await res.json();
     if (res.ok) {
       toast.success(data.message);
@@ -113,17 +91,13 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#181818] via-[#232323] to-[#181818] px-6 md:px-16 py-12 text-white">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-[#181818] via-[#232323] to-[#181818] px-4 sm:px-6 md:px-16 py-12 text-white">
       <div className="mb-10">
-        <h1 className="text-4xl font-extrabold mb-2">Settings</h1>
-        <p className="text-[#888] text-sm">
-          Manage your account details and preferences.
-        </p>
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-2">Settings</h1>
+        <p className="text-[#888] text-sm">Manage your account details and preferences.</p>
       </div>
 
       <div className="flex flex-col gap-6 max-w-2xl">
-        {/* Username */}
         <Section icon={User} title="Change Username">
           <div className="flex flex-col gap-3">
             <label className="text-sm text-[#aaa]">New Username</label>
@@ -143,7 +117,6 @@ const Settings = () => {
           </div>
         </Section>
 
-        {/* Email */}
         <Section icon={Mail} title="Change Email">
           <div className="flex flex-col gap-3">
             <label className="text-sm text-[#aaa]">New Email Address</label>
@@ -163,7 +136,6 @@ const Settings = () => {
           </div>
         </Section>
 
-        {/* Password */}
         <Section icon={Lock} title="Change Password">
           <div className="flex flex-col gap-3">
             {[
@@ -176,9 +148,7 @@ const Settings = () => {
                 <input
                   type="password"
                   value={passwords[key]}
-                  onChange={(e) =>
-                    setPasswords({ ...passwords, [key]: e.target.value })
-                  }
+                  onChange={(e) => setPasswords({ ...passwords, [key]: e.target.value })}
                   className="w-full bg-[#181818] border border-[#333] rounded-lg px-4 py-3 text-white outline-none focus:border-[#e50914] transition text-sm"
                 />
               </div>
@@ -193,11 +163,9 @@ const Settings = () => {
           </div>
         </Section>
 
-        {/* Delete Account */}
         <Section icon={Trash2} title="Delete Account">
           <p className="text-[#888] text-sm mb-4">
-            Permanently delete your account and all saved data. This action
-            cannot be undone.
+            Permanently delete your account and all saved data. This action cannot be undone.
           </p>
           {!showDeleteConfirm ? (
             <button
@@ -208,9 +176,7 @@ const Settings = () => {
             </button>
           ) : (
             <div className="bg-[#181818] border border-red-600/40 rounded-xl p-4 flex flex-col gap-3">
-              <p className="text-white text-sm font-semibold">
-                Are you sure? This cannot be undone.
-              </p>
+              <p className="text-white text-sm font-semibold">Are you sure? This cannot be undone.</p>
               <div className="flex gap-3">
                 <button
                   onClick={handleDeleteAccount}
